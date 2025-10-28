@@ -32,28 +32,17 @@ def calc_rsi(prices, period=14):
     return 100.0 - (100.0 / (1.0 + rs))
 
 def calc_adx_approx(prices, period=14):
-    """
-    ADX تقریبی فقط با close (میانگین تغییرات قدر مطلق)
-    توجه: ADX دقیق نیاز به H/L/C دارد. این تقریبی برای فیلتر رنج است.
-    """
+    """ADX تقریبی فقط با close"""
     if not prices or len(prices) < period + 1:
         return None
     diffs = [abs(prices[i] - prices[i-1]) for i in range(1, len(prices))]
     return sum(diffs[-period:]) / period
 
-# ---------------- candlestick patterns (simple) ----------------
+# ---------------- candlestick patterns ----------------
 def is_bullish_engulfing(candles):
-    """
-    بررسی Bullish Engulfing ساده:
-    نیاز به حداقل 2 کندل: کندل قبلی نزولی (close < open)
-    کندل فعلی صعودی (close > open)
-    بدن کندل فعلی بدنه کندل قبلی را بپوشاند (open_current < close_prev and close_current > open_prev)
-    """
     if not candles or len(candles) < 2:
         return False
-    prev = candles[-2]
-    cur = candles[-1]
-    # prev bearish and cur bullish
+    prev, cur = candles[-2], candles[-1]
     if prev["close"] < prev["open"] and cur["close"] > cur["open"]:
         if cur["open"] <= prev["close"] and cur["close"] >= prev["open"]:
             return True
@@ -62,9 +51,32 @@ def is_bullish_engulfing(candles):
 def is_bearish_engulfing(candles):
     if not candles or len(candles) < 2:
         return False
-    prev = candles[-2]
-    cur = candles[-1]
+    prev, cur = candles[-2], candles[-1]
     if prev["close"] > prev["open"] and cur["close"] < cur["open"]:
         if cur["open"] >= prev["close"] and cur["close"] <= prev["open"]:
             return True
     return False
+
+def is_hammer(candles):
+    if not candles:
+        return False
+    c = candles[-1]
+    body = abs(c["close"] - c["open"])
+    lower_shadow = c["open"] - c["low"] if c["close"] > c["open"] else c["close"] - c["low"]
+    upper_shadow = c["high"] - c["close"] if c["close"] > c["open"] else c["high"] - c["open"]
+    return lower_shadow >= 2 * body and upper_shadow <= body
+
+def is_inverted_hammer(candles):
+    if not candles:
+        return False
+    c = candles[-1]
+    body = abs(c["close"] - c["open"])
+    upper_shadow = c["high"] - c["close"] if c["close"] > c["open"] else c["high"] - c["open"]
+    lower_shadow = c["open"] - c["low"] if c["close"] > c["open"] else c["close"] - c["low"]
+    return upper_shadow >= 2 * body and lower_shadow <= body
+
+def is_shooting_star(candles):
+    return is_inverted_hammer(candles)
+
+def is_hanging_man(candles):
+    return is_hammer(candles)
