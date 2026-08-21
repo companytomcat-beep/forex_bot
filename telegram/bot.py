@@ -4,28 +4,23 @@ from config import settings
 
 def send_telegram(text):
     """
-    ارسال پیام ساده با HTTP API تلگرام
-    chat_id: عدد یا رشته‌ای که در settings.CHAT_ID هست
+    Send a simple message to Telegram using HTTP API.
     """
-    if not settings.BOT_TOKEN or not settings.CHAT_ID:
-        print("Telegram token or chat_id not configured in .env")
+    token = settings.TELEGRAM_BOT_TOKEN
+    chat_id = settings.TELEGRAM_CHAT_ID
+    if not token or not chat_id:
+        print("[TELEGRAM] token or chat_id not configured")
         return False
-
-    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": settings.CHAT_ID,
-        "text": text,
-        "parse_mode": "HTML"
-    }
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     try:
         r = requests.post(url, data=payload, timeout=10)
         r.raise_for_status()
-        # optional: check result
-        res = r.json()
-        if not res.get("ok"):
-            print("Telegram API returned not ok:", res)
+        data = r.json()
+        if not data.get("ok"):
+            print("[TELEGRAM] API returned not ok:", data)
             return False
         return True
     except Exception as e:
-        print("Telegram send error:", e)
+        print("[TELEGRAM] send error:", e)
         return False
